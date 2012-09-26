@@ -61,9 +61,11 @@ private String getRevisionFromSvnCli() {
     try {
         def command = 'svn info --xml'
         def proc = command.execute()
-        proc.waitFor()
-        if (proc.exitValue() == 0) {
-            def slurper = new XmlSlurper().parse(proc.in)
+        def out = new ByteArrayOutputStream()
+        proc.consumeProcessOutput(out, null) //prevent blocking in Windows due to a full output buffer
+        int exitVal = proc.waitFor()
+        if (exitVal == 0) {
+            def slurper = new XmlSlurper().parseText(out.toString())
             return slurper.entry.@revision
         }
     } catch (ignore) {
